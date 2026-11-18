@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Verified company Google accounts can read cannabis_receipts.
+    // Writes are denied because no rule grants them (Firestore denies by default).
+    match /cannabis_receipts/{id} {
+      allow read: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@growtown[.]ca$');
+    }
+  }
+}
