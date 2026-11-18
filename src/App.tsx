@@ -1,38 +1,17 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, Timestamp } from "firebase/firestore";
+import { Link, Route, Routes } from "react-router";
 import {
   GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User,
 } from "firebase/auth";
-import { auth, db } from "./firebase";
-
-type Receipt = { id: string; name: string; date: string };
-
-// A Firestore date may be a Timestamp object or a plain string; display either
-function formatDate(v: unknown): string {
-  return v instanceof Timestamp ? v.toDate().toLocaleString("en-CA") : String(v ?? "");
-}
+import { auth } from "./firebase";
+import ReceiptsList from "./pages/ReceiptsList";
+import NewReceipt from "./pages/NewReceipt";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);    // signed-in user, or null
-  const [rows, setRows] = useState<Receipt[]>([]);        // data from Firestore
-  const [error, setError] = useState("");
 
   // Listen for sign-in / sign-out
   useEffect(() => onAuthStateChanged(auth, setUser), []);
-
-  // Once signed in, read every document in cannabis_receipts
-  useEffect(() => {
-    if (!user) return;
-    getDocs(collection(db, "cannabis_receipts"))
-      .then((snap) =>
-        setRows(snap.docs.map((d) => ({
-          id: d.id,
-          name: d.data().Name,
-          date: formatDate(d.data().Date),
-        })))
-      )
-      .catch((e) => setError(e.message));
-  }, [user]);
 
   if (!user) {
     return (
@@ -44,17 +23,16 @@ export default function App() {
 
   return (
     <main style={{ fontFamily: "Arial, sans-serif", padding: 24 }}>
-      <p>{user.email} <button onClick={() => signOut(auth)}>Sign out</button></p>
-      <h1>Cannabis receipts</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <table border={1} cellPadding={6}>
-        <thead><tr><th>ID</th><th>Name</th><th>Date</th></tr></thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}><td>{r.id}</td><td>{r.name}</td><td>{r.date}</td></tr>
-          ))}
-        </tbody>
-      </table>
+      <header style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        <Link to="/">Receipts</Link>
+        <span style={{ marginLeft: "auto" }}>{user.email}</span>
+        <button onClick={() => signOut(auth)}>Sign out</button>
+      </header>
+      <Routes>
+        <Route path="/" element={<ReceiptsList />} />
+        <Route path="/receipts/new" element={<NewReceipt user={user} />} />
+        <Route path="*" element={<p>Page not found. <Link to="/">Back to receipts</Link></p>} />
+      </Routes>
     </main>
   );
 }

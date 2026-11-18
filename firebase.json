@@ -22,7 +22,7 @@
   "auth": {
     "providers": {
       "googleSignIn": {
-        "oAuthBrandDisplayName": "web-app-project-515019",
+        "oAuthBrandDisplayName": "Growtown Receiving",
         "supportEmail": "bella@growtown.ca"
       }
     }
