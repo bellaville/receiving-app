@@ -1,5 +1,5 @@
 import {
-  allFields, type FieldDef, type FormDef, type FormRow, type FormValues,
+  allFields, type FormDef, type FormRow, type FormValues,
   type RawRow, type RawScalar, type RawValues, type ScalarField, type Scalar,
 } from "./types.ts";
 
@@ -70,21 +70,4 @@ export function validateForm(form: FormDef, raw: RawValues): { values: FormValue
   }
 
   return { values, errors };
-}
-
-// Display a saved value in the table (and later the PDF)
-export function formatValue(f: FieldDef, v: unknown): string {
-  if (v === undefined || v === null) return "";
-  switch (f.type) {
-    case "group":
-      return Array.isArray(v) ? String(v.length) : "";
-    case "checkbox":
-      return v ? "Yes" : "No";
-    case "number": {
-      const n = typeof v === "number" && f.decimals !== undefined && !f.integer ? v.toFixed(f.decimals) : String(v);
-      return f.unit ? `${n} ${f.unit}` : n;
-    }
-    default:
-      return String(v);
-  }
 }
