@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "gen:rules": "node scripts/gen-rules.ts",
+    "check:rules": "node scripts/gen-rules.ts --check",
+    "build": "npm run check:rules && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

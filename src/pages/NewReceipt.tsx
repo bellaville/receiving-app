@@ -3,44 +3,40 @@ import { useNavigate } from "react-router";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "../firebase";
-
-// Max lengths must match firestore.rules
-const MAX_TEXT = 200;
-
-const fieldStyle = { display: "flex", flexDirection: "column" as const, gap: 4, marginBottom: 12, maxWidth: 400 };
+import FormRenderer from "../components/FormRenderer";
+import { currentReceiptForm } from "../forms/receipt.ts";
+import { validateForm } from "../forms/validate.ts";
+import { initialRaw, type RawValues } from "../forms/types.ts";
 
 export default function NewReceipt({ user }: { user: User }) {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [dateReceived, setDateReceived] = useState("");   // "YYYY-MM-DD" from the date input
-  const [supplierLot, setSupplierLot] = useState("");
-  const [growtownLot, setGrowtownLot] = useState("");
+  const form = currentReceiptForm;
+  const [raw, setRaw] = useState<RawValues>(() => initialRaw(form));
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const data = {
-      name: name.trim(),
-      date_received: dateReceived,
-      supplier_lot: supplierLot.trim(),
-      growtown_lot: growtownLot.trim(),
-    };
-    if (!data.name || !data.date_received || !data.supplier_lot || !data.growtown_lot) {
-      setError("All fields are required.");
+    const { values, errors } = validateForm(form, raw);
+    setErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setSaveError("Fix the highlighted fields.");
       return;
     }
+
     setSaving(true);
-    setError("");
+    setSaveError("");
     try {
       await addDoc(collection(db, "cannabis_receipts"), {
-        ...data,
+        form_version: form.version,
+        values,
         created_by: user.email,
         created_at: serverTimestamp(),
       });
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setSaveError(err instanceof Error ? err.message : String(err));
       setSaving(false);
     }
   }
@@ -48,24 +44,15 @@ export default function NewReceipt({ user }: { user: User }) {
   return (
     <>
       <h1>Add receipt</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <label style={fieldStyle}>
-          Shipping Operator
-          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={MAX_TEXT} required />
-        </label>
-        <label style={fieldStyle}>
-          Date Received
-          <input type="date" value={dateReceived} onChange={(e) => setDateReceived(e.target.value)} required />
-        </label>
-        <label style={fieldStyle}>
-          Supplier Lot
-          <input value={supplierLot} onChange={(e) => setSupplierLot(e.target.value)} maxLength={MAX_TEXT} required />
-        </label>
-        <label style={fieldStyle}>
-          Growtown Lot
-          <input value={growtownLot} onChange={(e) => setGrowtownLot(e.target.value)} maxLength={MAX_TEXT} required />
-        </label>
+      {saveError && <p style={{ color: "red" }}>{saveError}</p>}
+      <form onSubmit={handleSubmit} noValidate>
+        <FormRenderer
+          form={form}
+          raw={raw}
+          errors={errors}
+          disabled={saving}
+          onChange={(key, value) => setRaw((r) => ({ ...r, [key]: value }))}
+        />
         <div style={{ display: "flex", gap: 8 }}>
           <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
           <button type="button" onClick={() => navigate("/")} disabled={saving}>Cancel</button>
