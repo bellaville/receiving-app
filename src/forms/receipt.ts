@@ -1,14 +1,18 @@
 import type { FormDef } from "./types.ts";
 
-// To change the form:
-//  - Rewording a label: edit it in place.
-//  - Adding, removing or changing a field: copy the current version to a new constant,
-//    bump `version`, add it to receiptFormVersions, and point currentReceiptForm at it.
-//    Keep old versions so old receipts still display with their original fields.
-//  - Then run `npm run gen:rules` and deploy the rules.
+// Each version is issued as a controlled blank form in the EQMS, so any change to `sections`,
+// including rewording a label, needs a new version:
+//  1. Copy the current version to a new constant, bump `version`, make the change, add it to
+//     receiptFormVersions and point currentCannabisReceiptForm at it. Keep old versions so
+//     old receipts still display with their original fields.
+//  2. Run `npm run gen:rules` and `npm run lock:forms`, then deploy the rules.
+//  3. Run `npm run gen:blank-pdf` and upload the PDF to Dot Compliance as the new revision of
+//     the controlled form. Set controlledDoc.revision once it is approved.
+// `npm run build` fails if a locked version's sections change (check:forms).
 
 const receiptFormV1: FormDef = {
   version: 1,
+  title: "Cannabis Receipt",
   sections: [
     {
       title: "Shipment",
@@ -29,6 +33,7 @@ const receiptFormV1: FormDef = {
 
 const receiptFormV2: FormDef = {
   version: 2,
+  title: "Cannabis Receipt",
   sections: [
     {
       title: "Shipment",
@@ -52,6 +57,8 @@ const WEIGHT = { type: "number", required: true, min: 0, decimals: 2, unit: "g" 
 
 const receiptFormV3: FormDef = {
   version: 3,
+  title: "Cannabis Receipt",
+  controlledDoc: { number: "TMP.9.1.2", revision: "" }, // revision: fill in once approved in Dot Compliance
   sections: [
     {
       title: "Shipment",
@@ -94,4 +101,4 @@ export const receiptFormVersions: Record<number, FormDef> = {
   3: receiptFormV3,
 };
 
-export const currentReceiptForm = receiptFormV3;
+export const currentCannabisReceiptForm = receiptFormV3;

@@ -4,13 +4,13 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "../firebase";
 import FormRenderer from "../components/FormRenderer";
-import { currentReceiptForm } from "../forms/receipt.ts";
+import { currentCannabisReceiptForm } from "../forms/receipt.ts";
 import { validateForm } from "../forms/validate.ts";
 import { initialRaw, type RawValues } from "../forms/types.ts";
 
 export default function NewReceipt({ user }: { user: User }) {
   const navigate = useNavigate();
-  const form = currentReceiptForm;
+  const form = currentCannabisReceiptForm;
   const [raw, setRaw] = useState<RawValues>(() => initialRaw(form));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);

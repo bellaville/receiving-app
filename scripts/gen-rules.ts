@@ -3,7 +3,7 @@
 //   npm run check:rules   -> fail if firestore.rules is out of date (runs before every build)
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { currentReceiptForm } from "../src/forms/receipt.ts";
+import { currentCannabisReceiptForm } from "../src/forms/receipt.ts";
 import { allFields, type FieldDef, type ScalarField } from "../src/forms/types.ts";
 
 const RULES_PATH = fileURLToPath(new URL("../firestore.rules", import.meta.url));
@@ -73,7 +73,7 @@ function check(f: ScalarField, v: string): string {
 }
 
 function generate(): string {
-  const form = currentReceiptForm;
+  const form = currentCannabisReceiptForm;
   const fields = allFields(form);
   checkKeys(fields);
 
@@ -131,5 +131,5 @@ if (process.argv.includes("--check")) {
   console.log("firestore.rules is up to date.");
 } else {
   writeFileSync(RULES_PATH, rules);
-  console.log(`Wrote firestore.rules for receipt form v${currentReceiptForm.version}.`);
+  console.log(`Wrote firestore.rules for receipt form v${currentCannabisReceiptForm.version}.`);
 }

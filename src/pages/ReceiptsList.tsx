@@ -2,11 +2,20 @@ import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { currentReceiptForm, receiptFormVersions } from "../forms/receipt.ts";
+import { currentCannabisReceiptForm, receiptFormVersions } from "../forms/receipt.ts";
 import { allFields, type FieldDef, type FormRow, type FormValues, type GroupField } from "../forms/types.ts";
 import { formatValue } from "../forms/format.ts";
 
-type Receipt = { id: string; form_version: number; values: FormValues };
+// Written by the receiptPdf Cloud Function after a receipt is saved
+type PdfStatus = { status: "pending" | "failed" | "done"; drive_url?: string; error?: string };
+type Receipt = { id: string; form_version: number; values: FormValues; pdf?: PdfStatus };
+
+function PdfCell({ pdf }: { pdf?: PdfStatus }) {
+  if (!pdf) return <>—</>;
+  if (pdf.status === "done") return <a href={pdf.drive_url} target="_blank" rel="noreferrer">Open</a>;
+  if (pdf.status === "failed") return <span style={{ color: "red" }} title={pdf.error}>Failed (retrying)</span>;
+  return <>Generating…</>;
+}
 
 // Field definition for `key` in the version a receipt was saved under (undefined if that version lacks it)
 function savedField(r: Receipt, key: string): FieldDef | undefined {
@@ -31,7 +40,7 @@ export default function ReceiptsList() {
   const [open, setOpen] = useState<Set<string>>(new Set());
 
   // Columns come from the current form's fields marked inList
-  const columns = allFields(currentReceiptForm).filter((f) => f.inList);
+  const columns = allFields(currentCannabisReceiptForm).filter((f) => f.inList);
   const expandable = rows.filter((r) => savedGroups(r).length > 0);
 
   // Read every document in cannabis_receipts (runs each time this page opens)
@@ -42,6 +51,7 @@ export default function ReceiptsList() {
           id: d.id,
           form_version: d.data().form_version,
           values: d.data().values ?? {},
+          pdf: d.data().pdf,
         })))
       )
       .catch((e) => setError(e.message));
@@ -72,7 +82,7 @@ export default function ReceiptsList() {
       {error && <p style={{ color: "red" }}>{error}</p>}
       <table border={1} cellPadding={6}>
         <thead>
-          <tr><th>ID</th>{columns.map((c) => <th key={c.key}>{c.label}</th>)}<th>Form</th></tr>
+          <tr><th>ID</th>{columns.map((c) => <th key={c.key}>{c.label}</th>)}<th>Form</th><th>PDF</th></tr>
         </thead>
         <tbody>
           {rows.map((r) => {
@@ -97,10 +107,11 @@ export default function ReceiptsList() {
                     );
                   })}
                   <td>{receiptFormVersions[r.form_version] ? `v${r.form_version}` : "unknown"}</td>
+                  <td><PdfCell pdf={r.pdf} /></td>
                 </tr>
                 {isOpen && groups.length > 0 && (
                   <tr>
-                    <td colSpan={columns.length + 2} style={{ paddingLeft: 32 }}>
+                    <td colSpan={columns.length + 3} style={{ paddingLeft: 32 }}>
                       {groups.map(({ field: g, rows: items }) => (
                         <table key={g.key} border={1} cellPadding={4} style={{ marginBottom: 8 }}>
                           <thead>

@@ -25,3 +25,6 @@ dist-ssr
 
 # firebase
 .firebase/
+
+# generated blank forms (upload to Dot Compliance)
+blank-forms/

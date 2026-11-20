@@ -35,7 +35,15 @@ export type FieldDef = ScalarField | GroupField;
 
 export type FormSection = { title: string; fields: FieldDef[] };
 
-export type FormDef = { version: number; sections: FormSection[] };
+// The controlled blank form in the EQMS that this version is issued as. Printed on generated PDFs.
+export type ControlledDoc = { number: string; revision: string };
+
+export type FormDef = {
+  version: number;
+  title: string;
+  controlledDoc?: ControlledDoc; // versions issued before the form was controlled have none
+  sections: FormSection[];
+};
 
 // Validated values as saved under `values` in Firestore. Empty optional fields are left out.
 export type Scalar = string | number | boolean;
